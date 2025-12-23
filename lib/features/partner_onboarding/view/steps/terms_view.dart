@@ -52,14 +52,7 @@ class TermsView extends StatelessWidget {
         onPrevious: vm.previousPage,
         onNext: vm.terms.isAccepted
             ? () {
-                // Final Submit action
-                print("Submitting Final Partner Onboarding Data...");
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Onboarding Submitted Successfully!"),
-                  ),
-                );
-                Navigator.of(context).pushReplacementNamed('/');
+                vm.submitData();
               }
             : null,
         nextLabel: "Submit",

@@ -10,6 +10,7 @@ class OnboardingViewModel extends ChangeNotifier {
   final PageController pageController = PageController();
   int _currentPageIndex = 0;
   bool _isNavigating = false;
+  bool _isLive = false;
 
   // Models
   final OwnerModel owner = OwnerModel();
@@ -64,12 +65,13 @@ class OnboardingViewModel extends ChangeNotifier {
   }
 
   int get currentPageIndex => _currentPageIndex;
+  bool get isLive => _isLive;
 
   // Total steps logic:
   // 1: Hook, 2: Sport, 3: Type, 4: Count
   // + (groundCount * 2) [Details & Availability]
-  // + 1: Location, 1: Pricing (Per Hour), 1: Amenities, 1: Media, 1: Owner, 1: Bank/Terms
-  int get totalSteps => 4 + (groundCount * 2) + 7;
+  // + 1: Location, 1: Pricing (Per Hour), 1: Amenities, 1: Media, 1: Owner, 1: Bank, 1: Terms, 1: Status
+  int get totalSteps => 4 + (groundCount * 2) + 8;
 
   void updateStep(int index) {
     _currentPageIndex = index;
@@ -94,6 +96,8 @@ class OnboardingViewModel extends ChangeNotifier {
   void previousPage() async {
     if (_isNavigating) return;
     if (_currentPageIndex > 0) {
+      // Don't allow going back from status screen if it's already live
+      if (_isLive) return;
       _isNavigating = true;
       await pageController.previousPage(
         duration: const Duration(milliseconds: 300),
@@ -108,6 +112,9 @@ class OnboardingViewModel extends ChangeNotifier {
     // Current ground index calculation if applicable
     int groundStepsStart = 4;
     int groundStepsEnd = groundStepsStart + (groundCount * 2);
+
+    // If we're on the status screen, don't save anything
+    if (_currentPageIndex >= totalSteps - 1) return;
 
     if (_currentPageIndex >= groundStepsStart &&
         _currentPageIndex < groundStepsEnd) {
@@ -199,6 +206,16 @@ class OnboardingViewModel extends ChangeNotifier {
   void updateGroundCount(int count) {
     groundCount = count;
     _initGrounds();
+    notifyListeners();
+  }
+
+  Future<void> submitData() async {
+    // Move to status screen
+    nextPage();
+
+    // Simulate review period
+    await Future.delayed(const Duration(seconds: 4));
+    _isLive = true;
     notifyListeners();
   }
 

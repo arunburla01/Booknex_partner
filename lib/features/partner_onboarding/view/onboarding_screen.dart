@@ -14,6 +14,7 @@ import 'package:booknex_partner/features/partner_onboarding/view/steps/media_upl
 import 'package:booknex_partner/features/partner_onboarding/view/steps/owner_details_view.dart';
 import 'package:booknex_partner/features/partner_onboarding/view/steps/bank_details_view.dart';
 import 'package:booknex_partner/features/partner_onboarding/view/steps/terms_view.dart';
+import 'package:booknex_partner/features/partner_onboarding/view/steps/submission_status_view.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -102,6 +103,8 @@ class OnboardingScreen extends StatelessWidget {
         return BankDetailsView(vm: vm);
       case 6:
         return TermsView(vm: vm);
+      case 7:
+        return SubmissionStatusView(vm: vm);
       default:
         return const Center(child: Text("Invalid Step"));
     }
