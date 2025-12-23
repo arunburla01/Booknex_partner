@@ -20,6 +20,10 @@ class SportSelectionView extends StatelessWidget {
     return StepContainer(
       title: "Which sport is this ground for?",
       subtitle: "One sport per flow. You can add more later.",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.selectedSport != null ? vm.nextPage : null,
+      ),
       children: [
         GridView.builder(
           shrinkWrap: true,
@@ -44,10 +48,6 @@ class SportSelectionView extends StatelessWidget {
           },
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.selectedSport != null ? vm.nextPage : null,
-      ),
     );
   }
 }

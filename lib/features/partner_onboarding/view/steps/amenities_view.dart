@@ -14,6 +14,10 @@ class AmenitiesView extends StatelessWidget {
 
     return StepContainer(
       title: "Amenities",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.nextPage,
+      ),
       children:
           firstGround?.amenities.keys.map((a) {
             return CheckboxListTile(
@@ -26,10 +30,6 @@ class AmenitiesView extends StatelessWidget {
             );
           }).toList() ??
           [],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.nextPage,
-      ),
     );
   }
 }

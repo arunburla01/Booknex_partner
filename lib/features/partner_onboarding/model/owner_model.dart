@@ -11,5 +11,12 @@ class OwnerModel {
     this.whatsappOptIn = true,
   });
 
-  // Add copyWith and fromJson/toJson if needed later for production robustness
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'mobile': mobile,
+      'email': email,
+      'whatsappOptIn': whatsappOptIn,
+    };
+  }
 }

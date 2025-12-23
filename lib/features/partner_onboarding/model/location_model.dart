@@ -20,4 +20,17 @@ class LocationModel {
     this.longitude,
     this.hasParking = false,
   });
+  Map<String, dynamic> toMap() {
+    return {
+      'branchName': branchName,
+      'address': address,
+      'landmark': landmark,
+      'city': city,
+      'state': state,
+      'pincode': pincode,
+      'latitude': latitude,
+      'longitude': longitude,
+      'hasParking': hasParking,
+    };
+  }
 }

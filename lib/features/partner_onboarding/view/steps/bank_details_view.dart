@@ -12,27 +12,35 @@ class BankDetailsView extends StatelessWidget {
     return StepContainer(
       title: "Bank & Payout Details",
       subtitle: "Tell us where to send your earnings.",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.nextPage,
+      ),
       children: [
         OnboardingTextFormField(
           label: "Account Holder Name",
           controller: vm.bankAccountHolderController,
           icon: Icons.badge,
+          errorText: vm.errors['accountHolder'],
         ),
         OnboardingTextFormField(
           label: "Bank Name",
           controller: vm.bankNameController,
           icon: Icons.account_balance,
+          errorText: vm.errors['bankName'],
         ),
         OnboardingTextFormField(
           label: "Account Number",
           controller: vm.bankAccountNumberController,
           keyboardType: TextInputType.number,
           icon: Icons.numbers,
+          errorText: vm.errors['accountNumber'],
         ),
         OnboardingTextFormField(
           label: "IFSC Code",
           controller: vm.bankIfscController,
           icon: Icons.confirmation_number,
+          errorText: vm.errors['ifsc'],
         ),
         OnboardingTextFormField(
           label: "UPI ID (Optional)",
@@ -40,10 +48,6 @@ class BankDetailsView extends StatelessWidget {
           icon: Icons.qr_code,
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.nextPage,
-      ),
     );
   }
 }

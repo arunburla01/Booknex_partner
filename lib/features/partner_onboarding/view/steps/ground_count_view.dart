@@ -12,6 +12,10 @@ class GroundCountView extends StatelessWidget {
     return StepContainer(
       title: "How many grounds / courts / nets do you have for this sport?",
       subtitle: "We will set up details for each one next.",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.nextPage,
+      ),
       children: [
         const SizedBox(height: 100),
         Center(
@@ -19,8 +23,9 @@ class GroundCountView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _countButton(Icons.remove, () {
-                if (vm.groundCount > 1)
+                if (vm.groundCount > 1) {
                   vm.updateGroundCount(vm.groundCount - 1);
+                }
               }),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -40,10 +45,6 @@ class GroundCountView extends StatelessWidget {
           ),
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.nextPage,
-      ),
     );
   }
 

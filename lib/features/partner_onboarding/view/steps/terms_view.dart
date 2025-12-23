@@ -16,6 +16,16 @@ class TermsView extends StatelessWidget {
     return StepContainer(
       title: "Declaration & Terms",
       subtitle: "Final step to get started.",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.terms.isAccepted
+            ? () {
+                vm.submitData();
+              }
+            : null,
+        nextLabel: "Submit",
+        isNextEnabled: vm.terms.isAccepted,
+      ),
       children: [
         const SizedBox(height: 40),
         CheckboxListTile(
@@ -48,16 +58,6 @@ class TermsView extends StatelessWidget {
           ),
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.terms.isAccepted
-            ? () {
-                vm.submitData();
-              }
-            : null,
-        nextLabel: "Submit",
-        isNextEnabled: vm.terms.isAccepted,
-      ),
     );
   }
 
@@ -138,7 +138,7 @@ class TermsView extends StatelessWidget {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
                       const SizedBox(height: 40),
                     ],
                   ),

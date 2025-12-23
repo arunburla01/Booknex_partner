@@ -15,4 +15,10 @@ class TermsModel {
   ];
 
   TermsModel({this.isAccepted = false});
+  Map<String, dynamic> toMap() {
+    return {
+      'isAccepted': isAccepted,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+  }
 }

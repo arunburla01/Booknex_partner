@@ -6,7 +6,10 @@ class OnboardingTextFormField extends StatelessWidget {
   final IconData? icon;
   final TextInputType keyboardType;
   final int maxLines;
+  final bool obscureText;
+  final String? errorText;
   final String? Function(String?)? validator;
+  final bool enabled;
 
   const OnboardingTextFormField({
     super.key,
@@ -15,7 +18,10 @@ class OnboardingTextFormField extends StatelessWidget {
     this.icon,
     this.keyboardType = TextInputType.text,
     this.maxLines = 1,
+    this.obscureText = false,
+    this.errorText,
     this.validator,
+    this.enabled = true,
   });
 
   @override
@@ -26,9 +32,12 @@ class OnboardingTextFormField extends StatelessWidget {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        obscureText: obscureText,
         validator: validator,
+        enabled: enabled,
         decoration: InputDecoration(
           labelText: label,
+          errorText: errorText,
           prefixIcon: icon != null ? Icon(icon) : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,

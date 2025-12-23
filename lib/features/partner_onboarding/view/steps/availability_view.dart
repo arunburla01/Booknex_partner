@@ -16,6 +16,10 @@ class AvailabilityView extends StatelessWidget {
   Widget build(BuildContext context) {
     return StepContainer(
       title: "Availability for Ground ${groundIndex + 1}",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.nextPage,
+      ),
       children: [
         const Text(
           "Operating Days",
@@ -66,10 +70,6 @@ class AvailabilityView extends StatelessWidget {
           ],
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.nextPage,
-      ),
     );
   }
 

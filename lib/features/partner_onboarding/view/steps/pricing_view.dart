@@ -12,6 +12,10 @@ class PricingView extends StatelessWidget {
     return StepContainer(
       title: "Pricing per Hour",
       subtitle: "Set the base price for booking.",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.nextPage,
+      ),
       children: [
         const SizedBox(height: 40),
         OnboardingTextFormField(
@@ -19,6 +23,7 @@ class PricingView extends StatelessWidget {
           controller: vm.priceController,
           keyboardType: TextInputType.number,
           icon: Icons.currency_rupee,
+          errorText: vm.errors['price'],
         ),
         const SizedBox(height: 16),
         const Text(
@@ -26,10 +31,6 @@ class PricingView extends StatelessWidget {
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.nextPage,
-      ),
     );
   }
 }

@@ -41,8 +41,8 @@ class GroundModel {
     Map<String, bool>? amenities,
     List<String>? imagePaths,
     this.videoPath,
-  }) : this.operatingDays = operatingDays ?? [],
-       this.amenities =
+  }) : operatingDays = operatingDays ?? [],
+       amenities =
            amenities ??
            {
              "Washroom": false,
@@ -53,5 +53,29 @@ class GroundModel {
              "Bowling Machine": false,
              "Canteen / Snacks": false,
            },
-       this.imagePaths = imagePaths ?? [];
+       imagePaths = imagePaths ?? [];
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'sport': sport,
+      'size': size,
+      'surfaceType': surfaceType,
+      'isIndoor': isIndoor,
+      'hasFloodlights': hasFloodlights,
+      'maxPlayers': maxPlayers,
+      'pricePerHour': pricePerHour,
+      'operatingDays': operatingDays,
+      'openingTime': openingTime != null
+          ? '${openingTime!.hour}:${openingTime!.minute}'
+          : null,
+      'closingTime': closingTime != null
+          ? '${closingTime!.hour}:${closingTime!.minute}'
+          : null,
+      'amenities': amenities,
+      'imagePaths': imagePaths,
+      'videoPath': videoPath,
+    };
+  }
 }

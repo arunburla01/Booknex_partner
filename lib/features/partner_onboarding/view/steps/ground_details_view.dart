@@ -16,16 +16,22 @@ class GroundDetailsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return StepContainer(
       title: "About your Ground ${groundIndex + 1}",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.nextPage,
+      ),
       children: [
         OnboardingTextFormField(
           label: "Ground Name / Identifier",
           controller: vm.groundNameController,
           icon: Icons.badge,
+          errorText: vm.errors['groundName'],
         ),
         OnboardingTextFormField(
           label: "Physical Size (e.g., 90x50 ft)",
           controller: vm.groundSizeController,
           icon: Icons.straighten,
+          errorText: vm.errors['groundSize'],
         ),
         const SizedBox(height: 16),
         const Text(
@@ -70,12 +76,9 @@ class GroundDetailsView extends StatelessWidget {
           controller: vm.maxPlayersController,
           keyboardType: TextInputType.number,
           icon: Icons.groups,
+          errorText: vm.errors['maxPlayers'],
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.nextPage,
-      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:booknex_partner/features/partner_onboarding/model/owner_model.dart';
 import 'package:booknex_partner/features/partner_onboarding/model/business_model.dart';
@@ -5,12 +6,22 @@ import 'package:booknex_partner/features/partner_onboarding/model/location_model
 import 'package:booknex_partner/features/partner_onboarding/model/ground_model.dart';
 import 'package:booknex_partner/features/partner_onboarding/model/bank_model.dart';
 import 'package:booknex_partner/features/partner_onboarding/model/terms_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 class OnboardingViewModel extends ChangeNotifier {
   final PageController pageController = PageController();
   int _currentPageIndex = 0;
   bool _isNavigating = false;
   bool _isLive = false;
+
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  FirebaseStorage get _storage => FirebaseStorage.instance;
+  final ImagePicker _picker = ImagePicker();
+  final Map<String, String?> errors = {};
 
   // Models
   final OwnerModel owner = OwnerModel();
@@ -52,9 +63,107 @@ class OnboardingViewModel extends ChangeNotifier {
       TextEditingController();
   final TextEditingController bankIfscController = TextEditingController();
   final TextEditingController bankUpiController = TextEditingController();
+  final TextEditingController otpController = TextEditingController();
+
+  // Auth State
+  String? _verificationId;
+  bool _isOtpSent = false;
+  bool _isPhoneVerified = false;
+  bool _isAuthLoading = false;
+
+  bool get isOtpSent => _isOtpSent;
+  bool get isPhoneVerified => _isPhoneVerified;
+  bool get isAuthLoading => _isAuthLoading;
 
   OnboardingViewModel() {
     _initGrounds();
+    _setupValidators();
+    if (_auth.currentUser != null) {
+      _isPhoneVerified = true;
+    }
+  }
+
+  void _setupValidators() {
+    groundNameController.addListener(
+      () => validateField('groundName', groundNameController.text),
+    );
+    groundSizeController.addListener(
+      () => validateField('groundSize', groundSizeController.text),
+    );
+    maxPlayersController.addListener(
+      () => validateField('maxPlayers', maxPlayersController.text),
+    );
+    branchNameController.addListener(
+      () => validateField('branchName', branchNameController.text),
+    );
+    addressController.addListener(
+      () => validateField('address', addressController.text),
+    );
+    cityController.addListener(
+      () => validateField('city', cityController.text),
+    );
+    stateController.addListener(
+      () => validateField('state', stateController.text),
+    );
+    pincodeController.addListener(
+      () => validateField('pincode', pincodeController.text),
+    );
+    ownerNameController.addListener(
+      () => validateField('ownerName', ownerNameController.text),
+    );
+    mobileController.addListener(
+      () => validateField('mobile', mobileController.text),
+    );
+    priceController.addListener(
+      () => validateField('price', priceController.text),
+    );
+    bankAccountHolderController.addListener(
+      () => validateField('accountHolder', bankAccountHolderController.text),
+    );
+    bankNameController.addListener(
+      () => validateField('bankName', bankNameController.text),
+    );
+    bankAccountNumberController.addListener(
+      () => validateField('accountNumber', bankAccountNumberController.text),
+    );
+    bankIfscController.addListener(
+      () => validateField('ifsc', bankIfscController.text),
+    );
+  }
+
+  void validateField(String field, String value) {
+    String? error;
+    if (value.isEmpty) {
+      error = "Field cannot be empty";
+    } else {
+      switch (field) {
+        case 'mobile':
+          if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+            error = "Invalid 10-digit number";
+          }
+          break;
+        case 'pincode':
+          if (!RegExp(r'^[0-9]{6}$').hasMatch(value)) {
+            error = "Invalid 6-digit pincode";
+          }
+          break;
+        case 'ifsc':
+          if (!RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$').hasMatch(value)) {
+            error = "Invalid IFSC code";
+          }
+          break;
+        case 'price':
+        case 'maxPlayers':
+        case 'accountNumber':
+          if (double.tryParse(value) == null) error = "Must be a number";
+          break;
+      }
+    }
+
+    if (errors[field] != error) {
+      errors[field] = error;
+      notifyListeners();
+    }
   }
 
   void _initGrounds() {
@@ -81,6 +190,16 @@ class OnboardingViewModel extends ChangeNotifier {
   void nextPage() async {
     if (_isNavigating) return;
     if (_currentPageIndex < totalSteps - 1) {
+      // Validate Owner Details step for phone verification
+      int groundStepsEnd = 4 + (groundCount * 2);
+      int remainingOffset = _currentPageIndex - groundStepsEnd;
+
+      if (remainingOffset == 4 && !_isPhoneVerified) {
+        errors['mobile'] = "Please verify your mobile number first";
+        notifyListeners();
+        return;
+      }
+
       _isNavigating = true;
       // Sync current controllers to models before moving if necessary
       _saveCurrentStepData();
@@ -89,6 +208,7 @@ class OnboardingViewModel extends ChangeNotifier {
         curve: Curves.easeInOut,
       );
       _loadStepData(_currentPageIndex);
+      _saveDraft(); // Incrementally save after navigation
       _isNavigating = false;
     }
   }
@@ -210,13 +330,78 @@ class OnboardingViewModel extends ChangeNotifier {
   }
 
   Future<void> submitData() async {
-    // Move to status screen
+    // 1. Final sync and move to status screen
+    _saveCurrentStepData();
     nextPage();
 
-    // Simulate review period
-    await Future.delayed(const Duration(seconds: 4));
-    _isLive = true;
-    notifyListeners();
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception("User not authenticated");
+
+      // 2. Upload media files individually (Ground 0 for now as per view)
+      final List<String> imageUrls = [];
+      for (var path in grounds[0].imagePaths) {
+        if (path.startsWith('http')) {
+          imageUrls.add(path); // Already uploaded
+          continue;
+        }
+
+        try {
+          final file = File(path);
+          final ref = _storage.ref().child(
+            'partners/${user.uid}/ground_0/${DateTime.now().millisecondsSinceEpoch}_${path.split('/').last}',
+          );
+          await ref.putFile(file);
+          final url = await ref.getDownloadURL();
+          imageUrls.add(url);
+        } catch (e) {
+          debugPrint("Failed to upload $path: $e");
+          // Continue with others as per user request (handle failure per file)
+        }
+      }
+
+      grounds[0].imagePaths = imageUrls;
+
+      // 3. Update Firestore with final URLs and status
+      await _firestore.collection('partners').doc(user.uid).update({
+        'grounds': grounds.map((g) => g.toMap()).toList(),
+        'status': 'SUBMITTED',
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      _isLive = true;
+    } catch (e) {
+      debugPrint("Submission error: $e");
+      errors['submission'] = "Failed to submit: ${e.toString()}";
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final data = {
+        'ownerId': user.uid,
+        'owner': owner.toMap(),
+        'location': location.toMap(),
+        'grounds': grounds.map((g) => g.toMap()).toList(),
+        'bank': bank.toMap(),
+        'terms': terms.toMap(),
+        'status': 'DRAFT',
+        'updatedAt': FieldValue.serverTimestamp(),
+        'currentStep': _currentPageIndex,
+      };
+
+      await _firestore
+          .collection('partners')
+          .doc(user.uid)
+          .set(data, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint("Draft save error: $e");
+    }
   }
 
   void toggleTerms(bool? value) {
@@ -273,6 +458,99 @@ class OnboardingViewModel extends ChangeNotifier {
   void setWhatsappOptIn(bool v) {
     owner.whatsappOptIn = v;
     notifyListeners();
+  }
+
+  // Media & Map methods
+  Future<void> pickImages(int groundIndex) async {
+    final List<XFile> images = await _picker.pickMultiImage();
+    if (images.isNotEmpty) {
+      grounds[groundIndex].imagePaths = images.map((e) => e.path).toList();
+      notifyListeners();
+    }
+  }
+
+  void updateCoordinates(double lat, double lng) {
+    location.latitude = lat;
+    location.longitude = lng;
+    notifyListeners();
+  }
+
+  // Integrated Auth Methods
+  Future<void> sendOtp() async {
+    final phone = mobileController.text.trim();
+    if (phone.length != 10) {
+      errors['mobile'] = "Enter a valid 10-digit number";
+      notifyListeners();
+      return;
+    }
+
+    _isAuthLoading = true;
+    errors['mobile'] = null;
+    notifyListeners();
+
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: "+91$phone", // Assuming India, adjust as needed
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          await _auth.signInWithCredential(credential);
+          _isPhoneVerified = true;
+          _isOtpSent = false;
+          _isAuthLoading = false;
+          notifyListeners();
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          errors['mobile'] = e.message;
+          _isAuthLoading = false;
+          notifyListeners();
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          _verificationId = verificationId;
+          _isOtpSent = true;
+          _isAuthLoading = false;
+          notifyListeners();
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+        },
+      );
+    } catch (e) {
+      errors['mobile'] = e.toString();
+      _isAuthLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> verifyOtp() async {
+    final code = otpController.text.trim();
+    if (code.length != 6) {
+      errors['otp'] = "Enter 6-digit OTP";
+      notifyListeners();
+      return;
+    }
+
+    _isAuthLoading = true;
+    errors['otp'] = null;
+    notifyListeners();
+
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: _verificationId!,
+        smsCode: code,
+      );
+      await _auth.signInWithCredential(credential);
+      _isPhoneVerified = true;
+      _isOtpSent = false;
+      _isAuthLoading = false;
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      errors['otp'] = e.message;
+      _isAuthLoading = false;
+      notifyListeners();
+    } catch (e) {
+      errors['otp'] = e.toString();
+      _isAuthLoading = false;
+      notifyListeners();
+    }
   }
 
   @override

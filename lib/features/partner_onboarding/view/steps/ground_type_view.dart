@@ -19,6 +19,10 @@ class GroundTypeView extends StatelessWidget {
     ];
     return StepContainer(
       title: "What type of ground is this?",
+      bottomAction: NavigationButtons(
+        onPrevious: vm.previousPage,
+        onNext: vm.selectedGroundType != null ? vm.nextPage : null,
+      ),
       children: [
         GridView.builder(
           shrinkWrap: true,
@@ -43,10 +47,6 @@ class GroundTypeView extends StatelessWidget {
           },
         ),
       ],
-      bottomAction: NavigationButtons(
-        onPrevious: vm.previousPage,
-        onNext: vm.selectedGroundType != null ? vm.nextPage : null,
-      ),
     );
   }
 }

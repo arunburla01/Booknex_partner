@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "481815235944",
+    "project_id": "booknex-partner",
+    "storage_bucket": "booknex-partner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481815235944:android:03c2c5de9f0f8cef429add",
+        "android_client_info": {
+          "package_name": "com.example.booknex_partner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbMxMTZfH3jogf3qEZfTj5jpdoJkOsH9w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
