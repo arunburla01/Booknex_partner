@@ -1,4 +1,4 @@
-import 'package:booknex_partner/ground_registration_wizard.dart';
+import 'package:booknex_partner/registration_form.dart';
 import 'package:flutter/material.dart';
 
 class WelcomePage extends StatelessWidget {
@@ -18,7 +18,7 @@ class WelcomePage extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         ElevatedButton(onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context)=>GroundRegistrationWizard() ));
+          Navigator.push(context, MaterialPageRoute(builder: (context)=>RegistrationForm() ));
         }, child: Text("register",style: Theme.of(context).textTheme.labelMedium,)),
       ],
     );
