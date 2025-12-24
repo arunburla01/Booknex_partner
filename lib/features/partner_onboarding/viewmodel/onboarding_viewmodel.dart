@@ -65,22 +65,11 @@ class OnboardingViewModel extends ChangeNotifier {
   final TextEditingController bankUpiController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
 
-  // Auth State
-  String? _verificationId;
-  bool _isOtpSent = false;
-  bool _isPhoneVerified = false;
-  bool _isAuthLoading = false;
-
-  bool get isOtpSent => _isOtpSent;
-  bool get isPhoneVerified => _isPhoneVerified;
-  bool get isAuthLoading => _isAuthLoading;
+  bool get isLive => _isLive;
 
   OnboardingViewModel() {
     _initGrounds();
     _setupValidators();
-    if (_auth.currentUser != null) {
-      _isPhoneVerified = true;
-    }
   }
 
   void _setupValidators() {
@@ -174,7 +163,6 @@ class OnboardingViewModel extends ChangeNotifier {
   }
 
   int get currentPageIndex => _currentPageIndex;
-  bool get isLive => _isLive;
 
   // Total steps logic:
   // 1: Hook, 2: Sport, 3: Type, 4: Count
@@ -190,16 +178,6 @@ class OnboardingViewModel extends ChangeNotifier {
   void nextPage() async {
     if (_isNavigating) return;
     if (_currentPageIndex < totalSteps - 1) {
-      // Validate Owner Details step for phone verification
-      int groundStepsEnd = 4 + (groundCount * 2);
-      int remainingOffset = _currentPageIndex - groundStepsEnd;
-
-      if (remainingOffset == 4 && !_isPhoneVerified) {
-        errors['mobile'] = "Please verify your mobile number first";
-        notifyListeners();
-        return;
-      }
-
       _isNavigating = true;
       // Sync current controllers to models before moving if necessary
       _saveCurrentStepData();
@@ -473,84 +451,6 @@ class OnboardingViewModel extends ChangeNotifier {
     location.latitude = lat;
     location.longitude = lng;
     notifyListeners();
-  }
-
-  // Integrated Auth Methods
-  Future<void> sendOtp() async {
-    final phone = mobileController.text.trim();
-    if (phone.length != 10) {
-      errors['mobile'] = "Enter a valid 10-digit number";
-      notifyListeners();
-      return;
-    }
-
-    _isAuthLoading = true;
-    errors['mobile'] = null;
-    notifyListeners();
-
-    try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: "+91$phone", // Assuming India, adjust as needed
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await _auth.signInWithCredential(credential);
-          _isPhoneVerified = true;
-          _isOtpSent = false;
-          _isAuthLoading = false;
-          notifyListeners();
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          errors['mobile'] = e.message;
-          _isAuthLoading = false;
-          notifyListeners();
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          _isOtpSent = true;
-          _isAuthLoading = false;
-          notifyListeners();
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
-    } catch (e) {
-      errors['mobile'] = e.toString();
-      _isAuthLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> verifyOtp() async {
-    final code = otpController.text.trim();
-    if (code.length != 6) {
-      errors['otp'] = "Enter 6-digit OTP";
-      notifyListeners();
-      return;
-    }
-
-    _isAuthLoading = true;
-    errors['otp'] = null;
-    notifyListeners();
-
-    try {
-      final credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: code,
-      );
-      await _auth.signInWithCredential(credential);
-      _isPhoneVerified = true;
-      _isOtpSent = false;
-      _isAuthLoading = false;
-      notifyListeners();
-    } on FirebaseAuthException catch (e) {
-      errors['otp'] = e.message;
-      _isAuthLoading = false;
-      notifyListeners();
-    } catch (e) {
-      errors['otp'] = e.toString();
-      _isAuthLoading = false;
-      notifyListeners();
-    }
   }
 
   @override

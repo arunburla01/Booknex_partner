@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:481815235944:android:03c2c5de9f0f8cef429add",
+        "mobilesdk_app_id": "1:481815235944:android:fa9bb0e19a18aa93429add",
         "android_client_info": {
-          "package_name": "com.example.booknex_partner"
+          "package_name": "in.booknex.partner"
         }
       },
       "oauth_client": [],
